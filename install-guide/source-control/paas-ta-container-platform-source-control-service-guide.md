@@ -74,7 +74,7 @@ NFS Storage Server 설치는 아래 가이드를 참조한다.
 :bulb: 해당 내용은 Kubernetes **Master Node**에서 진행한다.
 
 + 컨테이너 플랫폼 소스 컨트롤 Deployment 파일 다운로드 :  
-   [cp-source-control-deployment_v1.3.tar.gz](https://nextcloud.paas-ta.org/index.php/s/FSMcxmQ88kbBRHT)  
+   [cp-source-control-deployment-1.4.0.tar.gz](https://nextcloud.paas-ta.org/index.php/s/eYNNLggksJ3dE7r)  
 
 ```
 # Deployment 파일 다운로드 경로 생성
@@ -82,15 +82,15 @@ $ mkdir -p ~/workspace/container-platform
 $ cd ~/workspace/container-platform
 
 # Deployment 파일 다운로드 및 파일 경로 확인
-$ wget --content-disposition https://nextcloud.paas-ta.org/index.php/s/FSMcxmQ88kbBRHT/download
+$ wget --content-disposition https://nextcloud.paas-ta.org/index.php/s/eYNNLggksJ3dE7r/download
 
 $ ls ~/workspace/container-platform
   ...
-  cp-source-control-deployment-v1.3.tar.gz
+  cp-source-control-deployment-1.4.0.tar.gz
   ...
 
 # Deployment 파일 압축 해제
-$ tar xvfz cp-source-control-deployment-v1.3.tar.gz
+$ tar xvfz cp-source-control-deployment-1.4.0.tar.gz
 ```
 
 - Deployment 파일 디렉토리 구성
@@ -113,8 +113,8 @@ $ vi cp-source-control-vars.sh
 
 ```                                                     
 # COMMON VARIABLE
-K8S_MASTER_NODE_IP="{k8s master node public ip}"                 # Kubernetes master node public ip
-PROVIDER_TYPE="{container platform source control provider type}"        # Container platform source-control provider type (Please enter 'standalone' or 'service')
+K8S_MASTER_NODE_IP="{k8s master node public ip}"                       # Kubernetes master node public ip
+PROVIDER_TYPE="{container platform source control provider type}"      # Container platform source-control provider type (Please enter 'standalone' or 'service')
 ....    
 ```
 ```    
@@ -154,7 +154,6 @@ $ ./deploy-cp-source-control.sh
 ```
 
 ```
-
 ...
 ...
 namespace/cp-source-control created
@@ -171,7 +170,6 @@ cp-source-control-broker deployed
 cp-source-control-ui deployed
 ...
 ...
-
 
 ```
 
@@ -208,8 +206,6 @@ replicaset.apps/cp-source-control-api-deployment-76c8c5d8d9      1         1    
 replicaset.apps/cp-source-control-broker-deployment-579c577b6    1         1         0       51s
 replicaset.apps/cp-source-control-manager-deployment-8ff6cb694   1         1         0       51s
 replicaset.apps/cp-source-control-ui-deployment-bbfff5bd8        1         1         0       51s
-
-
 ```    
 
 <br>
@@ -221,7 +217,6 @@ replicaset.apps/cp-source-control-ui-deployment-bbfff5bd8        1         1    
 $ cd ~/workspace/container-platform/cp-source-control-deployment/script
 $ chmod +x uninstall-cp-source-control.sh
 $ ./uninstall-cp-source-control.sh
-
 ```
 ```
 Are you sure you want to delete the container platform source control? <y/n> # y 입력
