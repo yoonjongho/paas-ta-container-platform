@@ -11,8 +11,7 @@
     1.4. [참고 자료](#1.4)  
 
 2. [Prerequisite](#2)  
-    2.1. [NFS 서버 설치](#2.1)  
-    2.2. [컨테이너 플랫폼 포탈 설치](#2.2)  
+    2.1. [컨테이너 플랫폼 포털 설치](#2.1)  
         
 3. [컨테이너 플랫폼 소스 컨트롤 배포](#3)  
     3.1. [컨테이너 플랫폼 소스 컨트롤 Deployment 파일 다운로드](#3.1)  
@@ -30,7 +29,7 @@
 
 ## <div id='1'>1. 문서 개요
 ### <div id='1.1'>1.1. 목적
-본 문서(Container Platform Source Control 서비스 배포 설치 가이드)는 Kubernetes  Cluster 및 컨테이너 플랫폼 서비스 배포 형 포탈을 설치하고 컨테이너 플랫폼 서비스 배포형 소스 컨트롤 배포 방법을 기술하였다.<br>
+본 문서(Container Platform Source Control 서비스 배포 설치 가이드)는 Kubernetes  Cluster 및 컨테이너 플랫폼 서비스 배포 형 포털을 설치하고 컨테이너 플랫폼 서비스 배포형 소스 컨트롤 배포 방법을 기술하였다.<br>
 
 <br>
 
@@ -43,7 +42,7 @@
 ![image](https://user-images.githubusercontent.com/80228983/146350860-3722c081-7338-438d-b7ec-1fdac09160c4.png)
 <br>    
 시스템 구성은 Kubernetes Cluster(Master, Worker) 환경과 데이터 관리를 위한 네트워크 파일 시스템(NFS) 스토리지 서버로 구성되어 있다. 
-Kubespray를 통해 설치된 Kubernetes Cluster 환경에 컨테이너 플랫폼 소스 컨트롤 이미지 및 Helm Chart를 관리하는 Harbor, 컨테이너 플랫폼 소스 컨트롤 사용자 인증을 관리하는 Keycloak, 컨테이너 플랫폼 소스 컨트롤 메타 데이터를 관리하는 MariaDB(RDBMS)가 컨테이너 플랫폼 포탈을 통해서 제공된다.
+Kubespray를 통해 설치된 Kubernetes Cluster 환경에 컨테이너 플랫폼 소스 컨트롤 이미지 및 Helm Chart를 관리하는 Harbor, 컨테이너 플랫폼 소스 컨트롤 사용자 인증을 관리하는 Keycloak, 컨테이너 플랫폼 소스 컨트롤 메타 데이터를 관리하는 MariaDB(RDBMS)가 컨테이너 플랫폼 포털을 통해서 제공된다.
  컨테이너 플랫폼 소스 컨트롤에서는 소스를 관리하는 SCM-Server를 컨테이너로 제공한다. 
 총 필요한 VM 환경으로는 Master Node VM: 1개, Worker Node VM: 1개 이상, NFS Server : 1개가 필요하고 본 문서는 Kubernetes Cluster에 컨테이너 플랫폼 소스 컨트롤 환경을 배포하는 내용이다. 네트워크 파일 시스템(NFS) 은 컨테이너 플랫폼에서 기본으로 제공하는 스토리지로 사용자 환경에 따라 다양한 종류의 스토리지를 사용할 수 있다. 
 
@@ -55,17 +54,13 @@ Kubespray를 통해 설치된 Kubernetes Cluster 환경에 컨테이너 플랫�
 
 ## <div id='2'>2. Prerequisite
     
-### <div id='2.1'>2.1. NFS 서버 설치
-컨테이너 플랫폼 소스 컨트롤에서 사용할 스토리지 **NFS Storage Server** 설치가 사전에 진행되어야 한다.<br>
-NFS Storage Server 설치는 아래 가이드를 참조한다.  
-> [NFS 서버 설치](../nfs-server-install-guide.md)      
-    
-### <div id='2.2'>2.2. 컨테이너 플랫폼 포탈 설치
-컨테이너 플랫폼 소스 컨트롤에서 사용할 인프라로 인증서버 **KeyCloak Server**, 데이터베이스 **Maria DB**, 레포지토리 서버 **Harbor** 설치가 사전에 진행되어야 한다.
-파스타 컨테이너 플랫폼 포탈 배포 시 해당 인프라를 모두 설치한다.
-컨테이너 플랫폼 포탈 설치는 아래 가이드를 참조한다.
-> [파스타 컨테이너 플랫폼 포탈 배포](../container-platform-portal/paas-ta-container-platform-portal-deployment-service-guide.md)     
+### <div id='2.1'>2.1. 컨테이너 플랫폼 포털 설치
+컨테이너 플랫폼 소스 컨트롤에서 사용할 인프라로 인증서버 **KeyCloak Server**, 데이터베이스 **MariaDB**, 레포지토리 서버 **Harbor** 설치가 사전에 진행되어야 한다.
+파스타 컨테이너 플랫폼 포털 배포 시 해당 인프라를 모두 설치한다.
+컨테이너 플랫폼 포털 설치는 아래 가이드를 참조한다.
+> [파스타 컨테이너 플랫폼 포털 배포](../container-platform-portal/paas-ta-container-platform-portal-deployment-service-guide.md)     
 
+<br>
   
 ## <div id='3'>3. 컨테이너 플랫폼 소스 컨트롤 배포
     
@@ -145,6 +140,8 @@ KEYCLOAK_URL="https://${K8S_MASTER_NODE_IP}.nip.io:32710"   #if apply TLS, https
 ....     
 ```
 
+<br>
+
 ### <div id='3.3'>3.3. 컨테이너 플랫폼 소스 컨트롤 배포 스크립트 실행
 컨테이너 플랫폼 소스 컨트롤 배포를 위한 배포 스크립트를 실행한다.
 
@@ -170,7 +167,6 @@ cp-source-control-broker deployed
 cp-source-control-ui deployed
 ...
 ...
-
 ```
 
 
@@ -227,18 +223,21 @@ release "cp-source-control-ui" uninstalled
 namespace "cp-source-control" deleted
 ...
 ...
-
 ```
+
+<br>
   
 ## <div id='4'>4. 컨테이너 플랫폼 소스 컨트롤 서비스 브로커
 컨테이너 플랫폼 PaaS-TA 서비스 형 소스 컨트롤으로 설치하는 경우 CF와 Kubernetes에 배포된 컨테이너 플랫폼 소스 컨트롤 서비스 연동을 위해서 브로커를 등록해 주어야 한다.
-PaaS-TA 운영자 포탈을 통해 서비스를 등록하고 공개하면, PaaS-TA 사용자 포탈을 통해 서비스를 신청하여 사용할 수 있다.
+PaaS-TA 운영자 포털을 통해 서비스를 등록하고 공개하면, PaaS-TA 사용자 포털을 통해 서비스를 신청하여 사용할 수 있다.
   
-## <div id='4.1'>4.1. 컨테이너 플랫폼 소스 컨트롤 사용자 인증 서비스 구성
+### <div id='4.1'>4.1. 컨테이너 플랫폼 소스 컨트롤 사용자 인증 서비스 구성
 컨테이너 플랫폼 소스 컨트롤을 서비스로 사용하기 위해서는 **사용자 인증 서비스** 구성이 사전에 진행되어야 한다.<br>
 사용자 인증 서비스 구성은 아래 가이드를 참조한다.
 > [사용자 인증 서비스 구성](../container-platform-portal/paas-ta-container-platform-portal-deployment-service-guide.md#4)      
-컨테이너 플랫폼 포탈 사용자 인증 서비스 구성 시, 소스 컨트롤에도 적용된다.
+컨테이너 플랫폼 포털 사용자 인증 서비스 구성 시, 소스 컨트롤에도 적용된다.
+
+<br>
 
 ### <div id='4.2'>4.2. 컨테이너 플랫폼 소스 컨트롤 서비스 브로커 등록
 :bulb: 해당 내용은 PaaS-TA 포털이 설치된 **BOSH Inception**에서 진행한다.
@@ -279,7 +278,7 @@ OK
 ```
 $ cf service-brokers 
 Getting service brokers as admin... 
-name                                         url 
+name                               url 
 cp-source-control-service-broker   http://xx.xxx.xxx.xx:30093
 ```
 
@@ -292,7 +291,6 @@ Getting service access as admin...
 broker: cp-source-control-service-broker
    offering      plan     access   orgs
    scm-manager   Shared   none
-
 ```
 
         
@@ -321,9 +319,9 @@ broker: cp-source-control-service-broker
 <br>
     
 ### <div id='4.3'>4.3. 컨테이너 플랫폼 소스 컨트롤 서비스 조회 설정
-해당 설정은 PaaS-TA 포탈에서 컨테이너 플랫폼 소스 컨트롤 서비스를 조회하고 신청할 수 있도록 하기 위한 설정이다.
+해당 설정은 PaaS-TA 포털에서 컨테이너 플랫폼 소스 컨트롤 서비스를 조회하고 신청할 수 있도록 하기 위한 설정이다.
 
-##### PaaS-TA 운영자 포탈에 접속한다.
+##### PaaS-TA 운영자 포털에 접속한다.
 
 
 ##### 메뉴 [운영관리]-[카탈로그] 에서 앱서비스 탭 안에 Container Platform Source Control 서비스를 선택하여 설정을 변경한다.
@@ -336,7 +334,7 @@ broker: cp-source-control-service-broker
 ![image](https://user-images.githubusercontent.com/80228983/146360677-bd0878f4-85ac-48fc-9e30-6bc49a74381f.png)
 
 
-##### PaaS-TA 사용자 포탈에 접속한다.
+##### PaaS-TA 사용자 포털에 접속한다.
 
 ##### 메뉴 [카탈로그]-[서비스] 에서 서비스 탭 안에 Container Platform Source Control 서비스를 선택하여 서비스를 생성한다.
 ![image](https://user-images.githubusercontent.com/80228983/146360859-7388527a-e570-4985-b4bc-e5b4b3f19c55.png)

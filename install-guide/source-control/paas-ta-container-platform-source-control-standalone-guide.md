@@ -11,8 +11,7 @@
     1.4. [참고 자료](#1.4)  
 
 2. [Prerequisite](#2)  
-    2.1. [NFS 서버 설치](#2.1)  
-    2.2. [컨테이너 플랫폼 포탈 설치](#2.2)  
+    2.1. [컨테이너 플랫폼 포털 설치](#2.1)  
         
 3. [컨테이너 플랫폼 소스 컨트롤 배포](#3)  
     3.1. [컨테이너 플랫폼 소스 컨트롤 Deployment 파일 다운로드](#3.1)  
@@ -29,7 +28,7 @@
 
 ## <div id='1'>1. 문서 개요
 ### <div id='1.1'>1.1. 목적
-본 문서(컨테이너 플랫폼 소스 컨트롤 단독 배포 설치 가이드)는 단독배포된 Kubernetes Cluster 환경에서 컨테이너 플랫폼 포탈이 배포된 환경에서 소스 컨트롤 단독 배포 방법을 기술하였다.<br>
+본 문서(컨테이너 플랫폼 소스 컨트롤 단독 배포 설치 가이드)는 단독배포된 Kubernetes Cluster 환경에서 컨테이너 플랫폼 포털이 배포된 환경에서 소스 컨트롤 단독 배포 방법을 기술하였다.<br>
 
 <br>
 
@@ -40,7 +39,7 @@
 
 ### <div id='1.3'>1.3. 시스템 구성도
 시스템 구성은 Kubernetes Cluster(Master, Worker)와 Cluster 내부(DBMS, HAProxy, Private Repository, Keycloak)환경으로 구성되어 있다. <br>
-Kubespray를 통해 Kubernetes Cluster를 설치하고 컨테이너 플랫폼 포탈 로 Database, Private Repository 등 미들웨어 환경을 제공하여 Docker Image로 Kubernetes Cluster에 컨테이너 플랫폼 포탈 환경을 배포한다. <br>
+Kubespray를 통해 Kubernetes Cluster를 설치하고 컨테이너 플랫폼 포털 로 Database, Private Repository 등 미들웨어 환경을 제공하여 Docker Image로 Kubernetes Cluster에 컨테이너 플랫폼 포털 환경을 배포한다. <br>
 총 필요한 VM 환경으로는 **Master Node VM**: 1개, Worker Node VM: 1개 이상 필요하고 본 문서는 Kubernetes Cluster에 컨테이너 플랫폼 소스 컨트롤을 배포하는 내용이다.
 
 ![image](https://user-images.githubusercontent.com/80228983/146350860-3722c081-7338-438d-b7ec-1fdac09160c4.png)
@@ -55,18 +54,14 @@ Kubespray를 통해 Kubernetes Cluster를 설치하고 컨테이너 플랫폼 �
 
 ## <div id='2'>2. Prerequisite
     
-### <div id='2.1'>2.1. NFS 서버 설치
-컨테이너 플랫폼 소스 컨트롤에서 사용할 스토리지 **NFS Storage Server** 설치가 사전에 진행되어야 한다.<br>
-NFS Storage Server 설치는 아래 가이드를 참조한다.  
-> [NFS 서버 설치](../nfs-server-install-guide.md)      
-    
-### <div id='2.2'>2.2. 컨테이너 플랫폼 포탈 설치
-컨테이너 플랫폼 소스 컨트롤에서 사용할 인프라로 인증서버 **KeyCloak Server**, 데이터베이스 **Maria DB**, 레포지토리 서버 **Harbor** 설치가 사전에 진행되어야 한다.
-파스타 컨테이너 플랫폼 포탈 배포 시 해당 인프라를 모두 설치한다.
+### <div id='2.1'>2.1. 컨테이너 플랫폼 포털 설치
+컨테이너 플랫폼 소스 컨트롤에서 사용할 인프라로 인증서버 **KeyCloak Server**, 데이터베이스 **MariaDB**, 레포지토리 서버 **Harbor** 설치가 사전에 진행되어야 한다.
+파스타 컨테이너 플랫폼 포털 배포 시 해당 인프라를 모두 설치한다.
 컨테이너 플랫폼 인프라 설치는 아래 가이드를 참조한다.
-> [파스타 컨테이너 플랫폼 포탈 배포](../container-platform-portal/paas-ta-container-platform-portal-deployment-standalone-guide.md)     
+> [파스타 컨테이너 플랫폼 포털 배포](../container-platform-portal/paas-ta-container-platform-portal-deployment-standalone-guide.md)     
 
-
+<br>
+    
 ## <div id='3'>3. 컨테이너 플랫폼 소스 컨트롤 배포
     
 ### <div id='3.1'>3.1. 컨테이너 플랫폼 소스 컨트롤 Deployment 파일 다운로드
@@ -129,7 +124,7 @@ PROVIDER_TYPE="standalone"
 <br>    
 
 :bulb: Keycloak 기본 배포 방식은 **HTTP**이며 인증서를 통한 **HTTPS**를 설정되어 있는 경우
-> [Keycloak TLS 설정](../container-platform-portal/paas-ta-container-platform-portal-deployment-keycloak-tls-setting-guide.md)
+ > [Keycloak TLS 설정](../container-platform-portal/paas-ta-container-platform-portal-deployment-keycloak-tls-setting-guide.md)
 
 컨테이너 플랫폼 소스 컨트롤 변수 파일 내 아래 내용을 수정한다.
 ```
@@ -145,6 +140,8 @@ KEYCLOAK_URL="https://${K8S_MASTER_NODE_IP}.nip.io:32710"   #if apply TLS, https
 ....     
 ```
 
+<br>
+    
 ### <div id='3.3'>3.3. 컨테이너 플랫폼 소스 컨트롤 배포 스크립트 실행
 컨테이너 플랫폼 소스 컨트롤 배포를 위한 배포 스크립트를 실행한다.
 
@@ -169,7 +166,6 @@ cp-source-control-manager deployed
 cp-source-control-ui deployed
 ...
 ...
-
 ```
 
 <br>
