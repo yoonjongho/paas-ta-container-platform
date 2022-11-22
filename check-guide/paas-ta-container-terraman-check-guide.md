@@ -13,8 +13,8 @@
 2. [Terraman 실행](#2)  
   2.1. [Prerequisite](#2.1)  
   2.2. [SSH Key 생성 및 사전작업](#2.2)
-  2.4. [Terraman Template OpenStack](#2.3)  
-  2.5. [Terraman Template AWS](#2.4)  
+  2.3. [Terraman Template OpenStack](#2.3)  
+  2.4. [Terraman Template AWS](#2.4)  
 
 3. [Resource 생성 시 주의사항](#3)  
 
@@ -103,7 +103,7 @@ ex) OpenStack API, AWS API
 - Terraman이 동작하기 위해서는 Terraman Pod에서 **Master Node**와 **생성되는 Cluster Master Node**에 접속 할 수 있어야 한다.
 - cluster 접속을 위한 key 생성 전 기존 master cluster ansible 구성시 사용되었던 **개인키와 공개키(id_rsa, id_rsa.pub)** 는 백업이 필요하다.
 
-- **Master Node**에서 RSA 공개키를 생성한다. **(cluster 접속을 위한 key 생성)**
+- **Master Node**에서 RSA 공개키를 생성한다. **(cluster 접속을 위한 key 생성 - 반드시 RSA 공개키 생성 필요!! OPENSSH는 접속이 되지 않는다. 3.주의사항 참조)**
 ```
 $ ssh-keygen -t rsa -m PEM -f /home/ubuntu/.ssh/{{ clusterName }}-key
 Generating public/private rsa key pair.
@@ -528,7 +528,10 @@ resource "aws_instance" "worker" {
 	( 복사한 파일의 권한은 600 )
 - **Master Node 개인키**와 **Cluster 개인키**는 반드시 Terraman Pod 내에 **/home/1000/.ssh** 경로 내에 존재하여야 한다.
 
-- **Master Node**는 Template 작성시 Instance 명에 **MASTER**가 포함되어야 합니다.
+- **Master Node**는 Template 작성시 Instance 명에 **master**가 포함되어야 한다.
+
+- Iaas의 API 호출 방식이 IP가 아닌 Domain일 경우 Terraform이 설치되어 있는 **Master Node**의 Hosts 파일에 Domain을 추가해야 한다.
+  **( $ echo -e "\n{{ API IP }} {{ Domain }}" >> /etc/hosts )**
 
 <br>
 
