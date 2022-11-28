@@ -13,8 +13,8 @@
 2. [Terraman 실행](#2)  
   2.1. [Prerequisite](#2.1)  
   2.2. [SSH Key 생성 및 사전작업](#2.2)
-  2.4. [Terraman Template OpenStack](#2.3)  
-  2.5. [Terraman Template AWS](#2.4)  
+  2.3. [Terraman Template OpenStack](#2.3)  
+  2.4. [Terraman Template AWS](#2.4)  
 
 3. [Resource 생성 시 주의사항](#3)  
 
@@ -103,7 +103,7 @@ ex) OpenStack API, AWS API
 - Terraman이 동작하기 위해서는 Terraman Pod에서 **Master Node**와 **생성되는 Cluster Master Node**에 접속 할 수 있어야 한다.
 - cluster 접속을 위한 key 생성 전 기존 master cluster ansible 구성시 사용되었던 **개인키와 공개키(id_rsa, id_rsa.pub)** 는 백업이 필요하다.
 
-- **Master Node**에서 RSA 공개키를 생성한다. **(cluster 접속을 위한 key 생성)**
+- **Master Node**에서 RSA 공개키를 생성한다. **(cluster 접속을 위한 key 생성 - 반드시 RSA 공개키 생성 필요!! OPENSSH는 접속이 되지 않는다. 3.주의사항 참조)**
 ```
 $ ssh-keygen -t rsa -m PEM -f /home/ubuntu/.ssh/{{ clusterName }}-key
 Generating public/private rsa key pair.
@@ -140,7 +140,8 @@ $ kubectl cp /home/ubuntu/.ssh/{{Cluster 접속을 위한 개인키 명}} {{Terr
 <br>
 
 ### <div id='2.3'> 2.3. Terraman Template OpenStack
-2.3.Terraman을 이용하여 OpenStack Instance를 생성 시키는 Template 설명이다.
+2.3.Terraman을 이용하여 OpenStack Instance를 생성 시키는 Template 설명이다. 
+현 기본 템플릿은 Instance 생성에 맞추어져 있으므로 네트워크, keypair, 보안그룹 등은 사전에 Iaas에 생성되어 있는 정보를 사용한다. 따라서 Instance 생성외에 리소스는 사전에 생성해야 한다.
 
 ```
 # 1. data로 시작되는 영역은 Openstack에서 사용가능한 자원을 가져와 보관한다. 
@@ -267,6 +268,7 @@ resource "openstack_compute_floatingip_associate_v2" "fip_2" {
 
 ### <div id='2.4'> 2.4. Terraman Template AWS
 2.3.Terraman을 이용하여 AWS Instance를 생성 시키는 Template 설명이다.
+현 기본 템플릿은 Instance 생성에 맞추어져 있으므로 네트워크, keypair, 보안그룹 등은 사전에 Iaas에 생성되어 있는 정보를 사용한다. 따라서 Instance 생성외에 리소스는 사전에 생성해야 한다.
 
 ```
 # 1. data로 시작되는 영역은 Openstack에서 사용가능한 자원을 가져와 보관한다. 
@@ -290,166 +292,12 @@ resource "openstack_compute_floatingip_associate_v2" "fip_2" {
 #			values = ["${var.route_table_name}"]
 #		}
 
-# VPC 리소스 영역
-resource "aws_vpc" "paasta-cp-terraform-vpc" {
-	cidr_block = "172.10.0.0/20"					# VPC에 대한 IPv4 CIDR 블록
-	tags = { Name = "paasta-cp-terraform-vpc" }		# 리소스에 할당할 태그 맵
+# 키 페어에 대한 정보 제공
+data "aws_key_pair" "default_key" {
+  key_name = "cluster-name-key"		# 키 쌍 이름
 }
 
-# VPC 서브넷 리소스 영역
-resource "aws_subnet" "paasta-cp-terraform-subnet01" {
-	vpc_id = "${aws_vpc.paasta-cp-terraform-vpc.id}"	# VPC ID
-	cidr_block = "172.10.0.0/24"						# 서브넷의 IPv4 CIDR 블록
-	availability_zone = "ap-northeast-2a"				# 서브넷의 AZ
-	tags = { Name = "paasta-cp-terraform-subnet01" }	# 리소스에 할당할 태그 맵
-}
-
-resource "aws_subnet" "paasta-cp-terraform-subnet02" {
-	vpc_id = "${aws_vpc.paasta-cp-terraform-vpc.id}"
-	cidr_block = "172.10.1.0/24"
-	availability_zone = "ap-northeast-2a"
-	tags = { Name = "paasta-cp-terraform-subnet02" }
-}
-
-# VPC의 기본 라우팅 테이블을 관리하기 위한 리소스 영역
-resource "aws_default_route_table" "nc-public" {
-	default_route_table_id = "${aws_vpc.paasta-cp-terraform-vpc.default_route_table_id}"	# 기본 라우팅 테이블의 ID
-	tags = { Name = "New Public Route Table" }												# 리소스에 할당할 태그의 맵
-}
-
-# VPC 라우팅 테이블을 생성하기 위한 리소스 영역
-resource "aws_route_table" "nc-private" {
-	vpc_id = "${aws_vpc.paasta-cp-terraform-vpc.id}"	# VPC ID
-	tags = { Name = "New Route Private Table" }			# 리소스에 할당할 태그의 맵
-}
-
-# 라우팅 테이블과 서브넷 또는 라우팅 테이블과 인터넷 게이트웨이 또는 가상 프라이빗 게이트웨이 간의 연결을 생성하기 위한 리소스 영역
-resource "aws_route_table_association" "aws_public_2a" {
-	subnet_id = "${aws_subnet.paasta-cp-terraform-subnet01.id}"						# 연결을 생성하기 위한 서브넷 ID
-	route_table_id = "${aws_vpc.paasta-cp-terraform-vpc.default_route_table_id}"	# 연결할 라우팅 테이블의 ID
-}
-
-resource "aws_route_table_association" "aws_private_2a" {
-	subnet_id = "${aws_subnet.paasta-cp-terraform-subnet02.id}"
-	route_table_id = "${aws_vpc.paasta-cp-terraform-vpc.default_route_table_id}"
-}
-
-# VPC 인터넷 게이트웨이를 생성하기 위한 리소스
-resource "aws_internet_gateway" "aws-igw" {
-	vpc_id = "${aws_vpc.paasta-cp-terraform-vpc.id}"					# 생성할 VPC ID
-	tags = { Name = "paasta-cp-terraform-vpc Internet Gateway" }		# 리소스에 할당할 태그 맵
-}
-
-# VPC 라우팅 테이블에서 라우팅 테이블 항목(경로)을 생성하기 위한 리소스
-resource "aws_route" "aws_public" {
-	route_table_id         = "${aws_vpc.paasta-cp-terraform-vpc.default_route_table_id}"	# 라우팅 테이블의 ID
-	destination_cidr_block = "0.0.0.0/0"													# 대상 CIDR 블록
-	gateway_id             = "${aws_internet_gateway.aws-igw.id}"							# VPC 인터넷 게이트웨이 또는 가상 프라이빗 게이트웨이의 식별자
-}
-
-# 탄력적 IP 리소스를 제공
-resource "aws_eip" "aws_nat" {
-	vpc = true		# EIP가 VPC에 있는 경우, 리전이 EC2-Classic을 지원하지 않는 한 기본값은 true
-}
-
-# VPC NAT 게이트웨이를 생성하기 위한 리소스 영역
-resource "aws_nat_gateway" "aws-nat" {
-	allocation_id = "${aws_eip.aws_nat.id}"								# 게이트웨이에 대한 탄력적 IP 주소의 할당 ID
-	subnet_id     = "${aws_subnet.paasta-cp-terraform-subnet01.id}"		# 게이트웨이를 배치할 서브넷의 서브넷 ID
-}
-
-resource "aws_route" "aws_private" {
-	route_table_id         = "${aws_route_table.nc-private.id}"
-	destination_cidr_block = "0.0.0.0/0"
-	nat_gateway_id         = "${aws_nat_gateway.aws-nat.id}"
-}
-
-# Terraform이 승인된 유효한 계정 ID, 사용자 ID 및 ARN에 액세스할 수 있다. (인수가 존재하지 않음)
-data "aws_caller_identity" "current" {}
-
-# 변수 선언 - 변수명 : vpc_name
-variable "vpc_name" {
-	default = "paasta-cp-vpc"
-	description = "Unique name of the VPC that will be outfitted with Routes and Network ACLs"
-}
-
-# VPC에 대한 세부 정보를 제공한다.
-data "aws_vpc" "targetVpc" {
-	filter {							# 사용자 정의 필터 블록
-		name = "tag-value"				# 기본 AWS API에서 정의한 필터링 기준 필드의 이름
-		values = ["${var.vpc_name}"]	# 지정된 필드에 대해 허용되는 값 집합
-	}
-	filter {
-		name = "tag-key"
-		values = ["Name"]
-	}
-}
-
-# VPC 피어링 연결을 관리하기 위한 리소스 영역
-resource "aws_vpc_peering_connection" "dmz_to_application" {
-	vpc_id = data.aws_vpc.targetVpc.id									# 요청자 VPC의 ID
-	peer_owner_id = "${data.aws_caller_identity.current.account_id}"	# 피어 VPC 소유자의 AWS 계정 ID
-	peer_vpc_id = "${aws_vpc.paasta-cp-terraform-vpc.id}"				# VPC 피어링 연결을 생성하는 VPC의 ID
-	auto_accept = true													# 피어링을 수락
-}
-
-# 변수 선언 - 변수명 : route_table_name
-variable "route_table_name" {
-	default = "paasta-cp-routing-public"
-}
-
-# 특정 라우팅 테이블에 대한 세부 정보를 제공
-data "aws_route_table" "originPubRouteTable" {
-	filter {									# 구성 블록
-		name = "tag-value"						# 기본 AWS API에서 정의한 필터링 기준 필드의 이름
-		values = ["${var.route_table_name}"]	# 지정된 필드에 대해 허용되는 값 집합
-	}
-	filter {
-		name = "tag-key"
-		values = ["Name"]
-	}
-}
-
-# VPC 라우팅 테이블에서 라우팅 테이블 항목(경로)을 생성하기 위한 리소스
-resource "aws_route" "route" {
-	route_table_id = data.aws_route_table.originPubRouteTable.id						# 라우팅 테이블의 ID
-	destination_cidr_block = "${aws_vpc.paasta-cp-terraform-vpc.cidr_block}"			# 대상 CIDR 블록
-	vpc_peering_connection_id = "${aws_vpc_peering_connection.dmz_to_application.id}"	# VPC 피어링 연결의 식별자
-}
-
-resource "aws_route" "route2" {
-	route_table_id         = "${aws_vpc.paasta-cp-terraform-vpc.default_route_table_id}"
-	destination_cidr_block = data.aws_vpc.targetVpc.cidr_block
-	vpc_peering_connection_id = "${aws_vpc_peering_connection.dmz_to_application.id}"
-}
-
-# 키 페어에 대한 정보
-data "aws_key_pair" "terramanKeyPair" {
-	key_name = "terraform-key"		# 키 쌍 이름
-}
-
-# 보안 그룹 리소스 영역
-resource "aws_security_group" "paasta-cp-terraform-sg-all" {
-	name = "paasta-cp-terraform-sg-all"					# 보안 그룹의 이름
-	description = "Allow all inbound traffic"			# 보안 그룹 설명
-	vpc_id = "${aws_vpc.paasta-cp-terraform-vpc.id}"	# VPC ID
-
-	ingress {							# 수신 규칙에 대한 구성 블록
-		from_port = 0					# 시작 포트
-		to_port = 0						# 끝 범위 포트
-		protocol = "-1"					# 프로토콜
-		cidr_blocks = ["0.0.0.0/0"]		# CIDR 블록 집합
-	}
-
-	egress {							# 송신 규칙에 대한 구성 블록
-		from_port = 0
-		to_port = 0
-		protocol = "-1"
-		cidr_blocks = ["0.0.0.0/0"]
-	}
-}
-
-# 다른 리소스에서 사용할 등록된 AMI의 ID 제공
+# 리소스에서 사용할 등록된 AMI의 ID 제공
 data "aws_ami" "ubuntu" {
 	most_recent = true															# 둘 이상의 결과가 반환되는 경우 가장 최근의 AMI를 사용
 	filter {																	# 필터링할 하나 이상의 이름/값 쌍
@@ -463,59 +311,155 @@ data "aws_ami" "ubuntu" {
 	owners = ["099720109477"]													# 검색을 제한할 AMI 소유자 목록
 }
 
-# 인스턴스 리소스
-resource "aws_instance" "master" {
-	ami = "${data.aws_ami.ubuntu.id}"								# 인스턴스에 사용할 AMI
-	instance_type = "t2.medium"										# 인스턴스에 사용할 인스턴스 유형
-	key_name = data.aws_key_pair.terramanKeyPair.key_name			# 인스턴스에 사용할 키 쌍의 키 이름
-	subnet_id = "${aws_subnet.paasta-cp-terraform-subnet01.id}"		# 시작할 VPC 서브넷 ID
-	vpc_security_group_ids = [										# 연결할 보안 그룹 ID
-		"${aws_security_group.paasta-cp-terraform-sg-all.id}"
-	]
-	associate_public_ip_address = true								# 퍼블릭 IP 주소를 VPC의 인스턴스와 연결할지 여부
-	tags = {														# 리소스에 할당할 태그의 맵
-		Name = "paasta-cp-terraform-m"
-	}
+# VPC 리소스 영역
+resource "aws_vpc" "paasta-cp-terraform-vpc" {
+	cidr_block = "172.10.0.0/20"					# VPC에 대한 IPv4 CIDR 블록
+	tags = { Name = "paasta-cp-terraform-vpc" }		# 리소스에 할당할 태그 맵
+}
 
-	provisioner "remote-exec" {									# Terraform으로 리소스를 생성하거나 제거할 때 로컬이나 원격에서 스크립트를 실행할 수 있는 기능
-		connection {											# 연결 블록
-			type = "ssh"										# 연결 유형
-			host = "${self.public_ip}"							# 연결할 리소스의 주소
-			user = "ubuntu"										# 연결에 사용할 사용자
-			private_key = file("~/.ssh/terramanKeyPair.key")	# 연결에 사용할 SSH 키의 내용
-			timeout = "1m"										# 연결을 사용할 수 있을 때까지 기다리는 시간 초과
-		}
-		inline = [
-			"cat .ssh/authorized_keys"							# 실행 커맨드
-		]
+# VPC 서브넷 리소스 영역
+resource "aws_subnet" "paasta-cp-terraform-subnet01" {
+  vpc_id = "${aws_vpc.aws-vpc.id}"					# VPC ID
+  cidr_block = "172.10.0.0/24"						# 서브넷의 IPv4 CIDR 블록
+  availability_zone = "ap-northeast-2a"				# 서브넷의 AZ
+  tags = { Name = "paasta-cp-terraform-subnet01" }	# 리소스에 할당할 태그 맵
+}
+
+resource "aws_subnet" "paasta-cp-terraform-subnet02" {
+  vpc_id = "${aws_vpc.aws-vpc.id}"
+  cidr_block = "172.10.1.0/24"
+  availability_zone = "ap-northeast-2a"
+  tags = {
+    Name = "paasta-cp-terraform-subnet02"
+  }
+}
+
+# 보안 그룹 리소스 영역
+resource "aws_security_group" "paasta-cp-terraform-sg-all" {
+  name = "paasta-cp-terraform-sg-all"					# 보안 그룹의 이름
+  description = "Allow all inbound traffic"			# 보안 그룹 설명
+  vpc_id = "${aws_vpc.aws-vpc.id}"	# VPC ID
+
+  ingress {							# 수신 규칙에 대한 구성 블록
+	from_port = 0					# 시작 포트
+	to_port = 0						# 끝 범위 포트
+	protocol = "-1"					# 프로토콜
+	cidr_blocks = ["0.0.0.0/0"]		# CIDR 블록 집합
+  }
+
+  egress {							# 송신 규칙에 대한 구성 블록
+	from_port = 0
+	to_port = 0
+	protocol = "-1"
+	cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+# 인스턴스 리소스 영역
+resource "aws_instance" "master" {
+  ami = "${data.aws_ami.ubuntu.id}"									# 인스턴스에 사용할 AMI
+  instance_type = "t3.medium"										# 인스턴스에 사용할 인스턴스 유형
+  key_name = data.aws_key_pair.default_key.key_name					# 인스턴스에 사용할 키 쌍의 키 이름
+  subnet_id = "${aws_subnet.paasta-cp-terraform-subnet01.id}"		# 시작할 VPC 서브넷 ID
+  vpc_security_group_ids = [										# 연결할 보안 그룹 ID
+	"${aws_security_group.paasta-cp-terraform-sg-all.id}"
+  ]
+  associate_public_ip_address = true								# 퍼블릭 IP 주소를 VPC의 인스턴스와 연결할지 여부
+  tags = {															# 리소스에 할당할 태그의 맵
+	Name = "paasta-cp-terraform-m"
+  }
+  provisioner "remote-exec" {								# Terraform으로 리소스를 생성하거나 제거할 때 로컬이나 원격에서 스크립트를 실행할 수 있는 기능
+	connection {											# 연결 블록
+	  type = "ssh"											# 연결 유형
+	  host = "${self.public_ip}"							# 연결할 리소스의 주소
+	  user = "ubuntu"										# 연결에 사용할 사용자
+	  private_key = file("~/.ssh/cluster-name-key.pem")		# 연결에 사용할 SSH 키의 내용
+	  timeout = "1m"										# 연결을 사용할 수 있을 때까지 기다리는 시간 초과
 	}
+	inline = [
+	  "cat .ssh/authorized_keys"							# 실행 커맨드
+	]
+  }
 }
 
 resource "aws_instance" "worker" {
-	ami = "${data.aws_ami.ubuntu.id}"
-	instance_type = "t2.medium"
-	key_name = data.aws_key_pair.terramanKeyPair.key_name
-	subnet_id = "${aws_subnet.paasta-cp-terraform-subnet01.id}"
-	vpc_security_group_ids = [
-		"${aws_security_group.paasta-cp-terraform-sg-all.id}"
-	]
-	associate_public_ip_address = true
-	tags = {
-		Name = "paasta-cp-terraform-w"
-	}
+  ami = "${data.aws_ami.ubuntu.id}"
+  instance_type = "t3.medium"
+  key_name = data.aws_key_pair.default_key.key_name
+  subnet_id = "${aws_subnet.paasta-cp-terraform-subnet01.id}"
+  vpc_security_group_ids = [
+    "${aws_security_group.paasta-cp-terraform-sg-all.id}"
+    #data.aws_security_group.default.id
+  ]
+  associate_public_ip_address = true
+  tags = {
+    Name = "paasta-cp-terraform-w"
+  }
+  provisioner "remote-exec" {
+    connection {
+        type = "ssh"
+        host = "${self.public_ip}"
+        user = "ubuntu"
+        private_key = file("~/.ssh/cluster-name-key.pem")
+        timeout = "1m"
+    }
+    inline = [
+      "cat .ssh/authorized_keys"
+    ]
+  }
+}
 
-	provisioner "remote-exec" {
-		connection {
-			type = "ssh"
-			host = "${self.public_ip}"
-			user = "ubuntu"
-			private_key = file("~/.ssh/terramanKeyPair.key")
-			timeout = "1m"
-		}
-		inline = [
-			"cat .ssh/authorized_keys"
-		]
-	}
+# VPC의 기본 라우팅 테이블을 관리하기 위한 리소스 영역
+resource "aws_default_route_table" "nc-public" {
+  default_route_table_id = "${aws_vpc.aws-vpc.default_route_table_id}"		# 기본 라우팅 테이블의 ID
+  tags = { Name = "New Public Route Table" }								# 리소스에 할당할 태그의 맵
+}
+
+# VPC 라우팅 테이블을 생성하기 위한 리소스 영역
+resource "aws_route_table" "nc-private" {
+  vpc_id = "${aws_vpc.aws-vpc.id}"				# VPC ID
+  tags = { Name = "New Route Private Table" }	# 리소스에 할당할 태그의 맵
+}
+
+# 라우팅 테이블과 서브넷 또는 라우팅 테이블과 인터넷 게이트웨이 또는 가상 프라이빗 게이트웨이 간의 연결을 생성하기 위한 리소스 영역
+resource "aws_route_table_association" "aws_public_2a" {
+  subnet_id = "${aws_subnet.paasta-cp-terraform-subnet01.id}"		# 연결을 생성하기 위한 서브넷 ID
+  route_table_id = "${aws_vpc.aws-vpc.default_route_table_id}"		# 연결할 라우팅 테이블의 ID
+}
+
+resource "aws_route_table_association" "aws_private_2a" {
+  subnet_id = "${aws_subnet.paasta-cp-terraform-subnet02.id}"
+  route_table_id = "${aws_vpc.aws-vpc.default_route_table_id}"
+}
+
+# VPC 인터넷 게이트웨이를 생성하기 위한 리소스
+resource "aws_internet_gateway" "aws-igw" {
+  vpc_id = "${aws_vpc.aws-vpc.id}"					# 생성할 VPC ID
+  tags = { Name = "aws-vpc Internet Gateway" }		# 리소스에 할당할 태그 맵
+}
+
+# VPC 라우팅 테이블에서 라우팅 테이블 항목(경로)을 생성하기 위한 리소스
+resource "aws_route" "aws_public" {
+  route_table_id         = "${aws_vpc.aws-vpc.default_route_table_id}"		# 라우팅 테이블의 ID
+  destination_cidr_block = "0.0.0.0/0"										# 대상 CIDR 블록
+  gateway_id             = "${aws_internet_gateway.aws-igw.id}"				# VPC 인터넷 게이트웨이 또는 가상 프라이빗 게이트웨이의 식별자
+}
+
+resource "aws_route" "aws_private" {
+  route_table_id         = "${aws_route_table.nc-private.id}"
+  destination_cidr_block = "0.0.0.0/0"
+  nat_gateway_id         = "${aws_nat_gateway.aws-nat.id}"
+}
+
+# 탄력적 IP 리소스를 제공
+resource "aws_eip" "aws_nat" {
+  vpc = true		# EIP가 VPC에 있는 경우, 리전이 EC2-Classic을 지원하지 않는 한 기본값은 true
+}
+
+# VPC NAT 게이트웨이를 생성하기 위한 리소스 영역
+resource "aws_nat_gateway" "aws-nat" {
+  allocation_id = "${aws_eip.aws_nat.id}"								# 게이트웨이에 대한 탄력적 IP 주소의 할당 ID
+  subnet_id     = "${aws_subnet.paasta-cp-terraform-subnet01.id}"		# 게이트웨이를 배치할 서브넷의 서브넷 ID
 }
 ```
 
@@ -528,7 +472,10 @@ resource "aws_instance" "worker" {
 	( 복사한 파일의 권한은 600 )
 - **Master Node 개인키**와 **Cluster 개인키**는 반드시 Terraman Pod 내에 **/home/1000/.ssh** 경로 내에 존재하여야 한다.
 
-- **Master Node**는 Template 작성시 Instance 명에 **MASTER**가 포함되어야 합니다.
+- **Master Node**는 Template 작성시 Instance 명에 **master**가 포함되어야 한다. ( master node의 ip를 특정하기 위한 구분 )
+
+- Iaas의 API 호출 방식이 IP가 아닌 Domain일 경우 Terraform이 설치되어 있는 **Master Node**의 Hosts 파일에 Domain을 추가해야 한다.
+  **( $ echo -e "\n{{ API IP }} {{ Domain }}" >> /etc/hosts )**
 
 <br>
 
